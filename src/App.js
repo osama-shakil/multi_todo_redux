@@ -2,12 +2,13 @@ import logo from './logo.svg';
 import './App.css';
 import {
   Container, Card, Row, Col, Input, Modal, ModalFooter,
-  ModalHeader, ModalBody,
+  ModalHeader, ModalBody, Spinner
 } from 'reactstrap'
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import { useDispatch, useSelector } from 'react-redux';
-import { addDatatolist, deleteDatatolist, updateDatatolist } from './Action';
+import { addDatatolist, deleteDatatolist, updateDatatolist, getData } from './Action';
+
 
 
 
@@ -27,7 +28,7 @@ function App() {
 
   const dispatch = useDispatch()
 
-  const list = useSelector((state) => state.todo)
+  const { list, addloader ,getloader,updateloader} = useSelector((state) => state.todo)
 
 
 
@@ -66,13 +67,16 @@ function App() {
     dataobj['inputtxt'] = [...inputfields]
     //console.log('dispatch data',dataobj)
 
-    dispatch(addDatatolist(dataobj))
-    setInputFields([{ data: '' }])
+    dispatch(addDatatolist(dataobj, () => {
+      setInputFields([{ data: '' }])
+    }))
+
 
   }
 
   const deleteTask = (e, id) => {
     e.preventDefault()
+    console.log('del:', id)
     dispatch(deleteDatatolist(id))
 
   }
@@ -80,8 +84,7 @@ function App() {
     e.preventDefault()
     setUpdateData(data.inputtxt)
     setUpdateId(id)
-    console.log('data::', data)
-    console.log('upate::', updateData)
+    console.log('data::', data, 'id::', id)
     toggle()
 
   }
@@ -131,6 +134,13 @@ function App() {
     toggle()
 
   }
+  const showData = (e) => {
+    e.preventDefault()
+    //console.log('list::',list)
+    dispatch(getData())
+    setshowdata(true)
+  }
+
   return (
 
     <Container>
@@ -180,14 +190,24 @@ function App() {
               <br></br>
               <br></br>
               <div style={{}}>
-                <Button variant="primary" type='submit'>Add</Button>
-                <Button variant="primary" onClick={e => { setshowdata(true) }} style={{ marginLeft: 5 }}>Show</Button>
+                <Button variant="primary" type='submit' disabled={addloader}>{addloader? 
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    variant="primary"
+                    role="status"
+                    aria-hidden="true"
+                  /> :'Add'
+                }</Button>
+
+                <Button variant="primary" onClick={(e) => { showData(e) }} style={{ marginLeft: 5 }}>Show</Button>
               </div>
             </form>
             <hr></hr>
             {
-
-              showdata && list.list.map((el, index) => {
+              getloader?<Spinner type="grow" color="warning"
+              children={false} /> :showdata && list.map((el, index) => {
                 // console.log('list', list)
                 return (
                   <Card style={{ textAlign: 'left', background: '#202142', color: 'white' }}>
@@ -199,9 +219,10 @@ function App() {
                         )
 
                       })}
+
                       <div style={{ float: 'right' }}>
-                        <Button variant="warning" onClick={(e) => handleEdit(e, el, index)} style={{ width: 60, fontSize: 9 }}>Edit</Button>
-                        <Button variant="danger" onClick={(e) => deleteTask(e, index)} style={{ width: 60, marginLeft: 5, fontSize: 9 }}>Delete</Button>
+                        <Button variant="warning" onClick={(e) => handleEdit(e, el, el.id)} style={{ width: 60, fontSize: 9 }}>Edit</Button>
+                        <Button variant="danger" onClick={(e) => deleteTask(e, el.id)} style={{ width: 60, marginLeft: 5, fontSize: 9 }}>Delete</Button>
                       </div>
                     </div>
                   </Card>
@@ -237,12 +258,12 @@ function App() {
 
 
                       {updateData.length - 1 === index
-                         && (
+                        && (
 
-                      <Button variant="success" name='data' style={{ marginLeft: 10, width: 40 }} onClick={(e) => { modelAddInput(e) }}>+</Button>
+                          <Button variant="success" name='data' style={{ marginLeft: 10, width: 40 }} onClick={(e) => { modelAddInput(e) }}>+</Button>
                         )}
                       {
-                         updateData.length !== 1&& (
+                        updateData.length !== 1 && (
 
                           <Button variant="warning" style={{ marginLeft: 5, width: 40 }} onClick={(e) => { modelRemoveInput(e, index) }}>-</Button>
                         )}
@@ -258,7 +279,15 @@ function App() {
 
           </ModalBody>
           <ModalFooter>
-            <Button color="primary" type="submit" >Save</Button>
+            <Button color="primary" type="submit"  disabled={updateloader}>{updateloader?  
+            <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    variant="primary"
+                    role="status"
+                    aria-hidden="true"
+                  />:'Save'}</Button>
           </ModalFooter>
         </form>
       </Modal>
